@@ -184,7 +184,7 @@ function Index() {
                   <div>
                     <p className="text-sm font-medium">{e.reason}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(e.date).toLocaleString()}
+                      {new Date(e.date).toLocaleDateString()} · {new Date(e.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
