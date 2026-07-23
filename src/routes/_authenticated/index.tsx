@@ -1,88 +1,143 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "MySpend — Personal Expense Tracker" },
-      { name: "description", content: "Track your spending and remaining balance on your device. No signup required." },
+      { name: "description", content: "Track your spending and remaining balance. Signed-in cloud storage." },
       { property: "og:title", content: "MySpend — Personal Expense Tracker" },
-      { property: "og:description", content: "Track your spending and remaining balance on your device." },
+      { property: "og:description", content: "Track your spending and remaining balance." },
     ],
   }),
-  component: Index,
+  component: Dashboard,
 });
 
-type Expense = { id: string; amount: number; reason: string; date: string };
+type Profile = { id: string; display_name: string | null; photo_url: string | null; total_amount: number };
+type Expense = { id: string; amount: number; reason: string; created_at: string };
 
-const LS = {
-  name: "ms_name",
-  pic: "ms_pic",
-  total: "ms_total",
-  expenses: "ms_expenses",
-};
+function Dashboard() {
+  const qc = useQueryClient();
+  const [userId, setUserId] = useState<string | null>(null);
 
-function useLocal<T>(key: string, initial: T) {
-  const [val, setVal] = useState<T>(initial);
-  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
-    const raw = localStorage.getItem(key);
-    if (raw !== null) {
-      try { setVal(JSON.parse(raw)); } catch { /* ignore */ }
-    }
-    setHydrated(true);
-  }, [key]);
-  useEffect(() => {
-    if (hydrated) localStorage.setItem(key, JSON.stringify(val));
-  }, [key, val, hydrated]);
-  return [val, setVal, hydrated] as const;
-}
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
 
-function Index() {
-  const [name, setName] = useLocal<string>(LS.name, "Your Name");
-  const [pic, setPic] = useLocal<string>(LS.pic, "");
-  const [total, setTotal] = useLocal<number>(LS.total, 0);
-  const [expenses, setExpenses] = useLocal<Expense[]>(LS.expenses, []);
+  const profileQ = useQuery({
+    enabled: !!userId,
+    queryKey: ["profile", userId],
+    queryFn: async (): Promise<Profile> => {
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId!).maybeSingle();
+      if (error) throw error;
+      if (!data) {
+        const { data: created, error: e2 } = await supabase
+          .from("profiles")
+          .insert({ id: userId! })
+          .select()
+          .single();
+        if (e2) throw e2;
+        return created as Profile;
+      }
+      return data as Profile;
+    },
+  });
+
+  const expensesQ = useQuery({
+    enabled: !!userId,
+    queryKey: ["expenses", userId],
+    queryFn: async (): Promise<Expense[]> => {
+      const { data, error } = await supabase
+        .from("expenses")
+        .select("*")
+        .eq("user_id", userId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Expense[];
+    },
+  });
 
   const [editingProfile, setEditingProfile] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
   const [totalInput, setTotalInput] = useState("");
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
 
-  const spent = expenses.reduce((s, e) => s + e.amount, 0);
+  const profile = profileQ.data;
+  const expenses = expensesQ.data ?? [];
+  const total = Number(profile?.total_amount ?? 0);
+  const spent = expenses.reduce((s, e) => s + Number(e.amount), 0);
   const rest = total - spent;
 
-  const addExpense = (e: React.FormEvent) => {
-    e.preventDefault();
-    const amt = parseFloat(amount);
-    if (!amt || amt <= 0 || !reason.trim()) return;
-    setExpenses([
-      { id: crypto.randomUUID(), amount: amt, reason: reason.trim(), date: new Date().toISOString() },
-      ...expenses,
-    ]);
-    setAmount("");
-    setReason("");
+  const updateProfile = async (patch: Partial<Profile>) => {
+    if (!userId) return;
+    const { error } = await supabase.from("profiles").update(patch).eq("id", userId);
+    if (error) return alert(error.message);
+    qc.invalidateQueries({ queryKey: ["profile", userId] });
   };
 
-  const removeExpense = (id: string) => setExpenses(expenses.filter((e) => e.id !== id));
+  const saveName = async () => {
+    await updateProfile({ display_name: nameDraft });
+    setEditingProfile(false);
+  };
 
   const onPicChange = (file: File | undefined) => {
     if (!file) return;
     const r = new FileReader();
-    r.onload = () => setPic(String(r.result));
+    r.onload = () => updateProfile({ photo_url: String(r.result) });
     r.readAsDataURL(file);
   };
 
-  const setTotalAmount = (e: React.FormEvent) => {
+  const setTotalAmount = async (e: React.FormEvent) => {
     e.preventDefault();
     const v = parseFloat(totalInput);
-    if (!isNaN(v)) setTotal(v);
+    if (isNaN(v)) return;
+    await updateProfile({ total_amount: v });
     setTotalInput("");
   };
+
+  const addExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amt = parseFloat(amount);
+    if (!amt || amt <= 0 || !reason.trim() || !userId) return;
+    const { error } = await supabase
+      .from("expenses")
+      .insert({ user_id: userId, amount: amt, reason: reason.trim() });
+    if (error) return alert(error.message);
+    setAmount("");
+    setReason("");
+    qc.invalidateQueries({ queryKey: ["expenses", userId] });
+  };
+
+  const removeExpense = async (id: string) => {
+    const { error } = await supabase.from("expenses").delete().eq("id", id);
+    if (error) return alert(error.message);
+    qc.invalidateQueries({ queryKey: ["expenses", userId] });
+  };
+
+  const signOut = async () => {
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    window.location.href = "/auth";
+  };
+
+  const displayName = profile?.display_name || "Your Name";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-2xl px-4 py-8 space-y-6">
+        <div className="flex justify-end">
+          <button
+            onClick={signOut}
+            className="text-xs text-muted-foreground hover:text-foreground underline"
+          >
+            Sign out
+          </button>
+        </div>
+
         {/* Profile */}
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
           <div className="flex items-center gap-4">
@@ -93,11 +148,11 @@ function Index() {
                 className="hidden"
                 onChange={(e) => onPicChange(e.target.files?.[0])}
               />
-              {pic ? (
-                <img src={pic} alt="Profile" className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/20" />
+              {profile?.photo_url ? (
+                <img src={profile.photo_url} alt="Profile" className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/20" />
               ) : (
                 <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center text-2xl font-semibold text-muted-foreground">
-                  {name.charAt(0).toUpperCase() || "?"}
+                  {displayName.charAt(0).toUpperCase() || "?"}
                 </div>
               )}
             </label>
@@ -105,18 +160,21 @@ function Index() {
               {editingProfile ? (
                 <input
                   autoFocus
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onBlur={() => setEditingProfile(false)}
-                  onKeyDown={(e) => e.key === "Enter" && setEditingProfile(false)}
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onBlur={saveName}
+                  onKeyDown={(e) => e.key === "Enter" && saveName()}
                   className="w-full rounded-md border bg-background px-2 py-1 text-lg font-semibold"
                 />
               ) : (
                 <button
-                  onClick={() => setEditingProfile(true)}
+                  onClick={() => {
+                    setNameDraft(displayName);
+                    setEditingProfile(true);
+                  }}
                   className="text-lg font-semibold hover:underline"
                 >
-                  {name}
+                  {displayName}
                 </button>
               )}
               <p className="text-xs text-muted-foreground mt-1">Tap avatar to change photo</p>
@@ -184,11 +242,11 @@ function Index() {
                   <div>
                     <p className="text-sm font-medium">{e.reason}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(e.date).toLocaleDateString()} · {new Date(e.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {new Date(e.created_at).toLocaleDateString()} · {new Date(e.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold">-{e.amount.toFixed(2)}</span>
+                    <span className="text-sm font-semibold">-{Number(e.amount).toFixed(2)}</span>
                     <button
                       onClick={() => removeExpense(e.id)}
                       className="text-xs text-muted-foreground hover:text-destructive"
