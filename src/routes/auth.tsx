@@ -151,7 +151,9 @@ function AuthPage() {
         </p>
         <p className="mt-4 text-center text-xs text-muted-foreground">
           <Link to="/" className="hover:underline">Back home</Link>
+        </p>
         </div>
+
       </div>
     </div>
   );
