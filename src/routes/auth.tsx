@@ -27,7 +27,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/" });
+      if (data.session) navigate({ to: "/dashboard" });
     });
   }, [navigate]);
 
@@ -49,11 +49,11 @@ function AuthPage() {
         if (error) throw error;
         setInfo("Account created. If email confirmation is on, check your inbox — otherwise you're signed in.");
         const { data } = await supabase.auth.getSession();
-        if (data.session) navigate({ to: "/" });
+        if (data.session) navigate({ to: "/dashboard" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/" });
+        navigate({ to: "/dashboard" });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -72,7 +72,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/" });
+    navigate({ to: "/dashboard" });
   };
 
   return (
