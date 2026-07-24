@@ -127,9 +127,10 @@ function Dashboard() {
   const displayName = profile?.display_name || "Your Name";
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground">
       <div className="mx-auto max-w-2xl px-4 py-8 space-y-6">
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-extrabold tracking-tight text-gradient">MySpend</h1>
           <button
             onClick={signOut}
             className="text-xs text-muted-foreground hover:text-foreground underline"
@@ -139,8 +140,10 @@ function Dashboard() {
         </div>
 
         {/* Profile */}
-        <div className="rounded-2xl border bg-card p-6 shadow-sm">
-          <div className="flex items-center gap-4">
+        <div className="relative overflow-hidden rounded-2xl border bg-card p-6 shadow-glow">
+          <div className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-gradient-hero opacity-30 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-gradient-sunset opacity-20 blur-2xl" />
+          <div className="relative flex items-center gap-4">
             <label className="cursor-pointer">
               <input
                 type="file"
@@ -149,9 +152,9 @@ function Dashboard() {
                 onChange={(e) => onPicChange(e.target.files?.[0])}
               />
               {profile?.photo_url ? (
-                <img src={profile.photo_url} alt="Profile" className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/20" />
+                <img src={profile.photo_url} alt="Profile" className="h-20 w-20 rounded-full object-cover ring-4 ring-primary/40" />
               ) : (
-                <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center text-2xl font-semibold text-muted-foreground">
+                <div className="h-20 w-20 rounded-full bg-gradient-hero flex items-center justify-center text-2xl font-bold text-white shadow-glow">
                   {displayName.charAt(0).toUpperCase() || "?"}
                 </div>
               )}
@@ -181,13 +184,13 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-3">
-            <Stat label="Total" value={total} />
-            <Stat label="Spent" value={spent} tone="muted" />
-            <Stat label="Remaining" value={rest} tone={rest < 0 ? "danger" : "good"} />
+          <div className="relative mt-6 grid grid-cols-3 gap-3">
+            <Stat label="Total" value={total} tone="blue" />
+            <Stat label="Spent" value={spent} tone="orange" />
+            <Stat label="Remaining" value={rest} tone={rest < 0 ? "danger" : "green"} />
           </div>
 
-          <form onSubmit={setTotalAmount} className="mt-4 flex gap-2">
+          <form onSubmit={setTotalAmount} className="relative mt-4 flex gap-2">
             <input
               type="number"
               step="0.01"
@@ -196,7 +199,7 @@ function Dashboard() {
               onChange={(e) => setTotalInput(e.target.value)}
               className="flex-1 rounded-md border bg-background px-3 py-2 text-sm"
             />
-            <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+            <button className="rounded-md bg-gradient-hero px-4 py-2 text-sm font-semibold text-white shadow-glow hover:opacity-90">
               Set
             </button>
           </form>
@@ -204,7 +207,10 @@ function Dashboard() {
 
         {/* Add expense */}
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
-          <h2 className="text-base font-semibold mb-3">Add expense</h2>
+          <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-gradient-sunset" />
+            Add expense
+          </h2>
           <form onSubmit={addExpense} className="space-y-3">
             <input
               type="number"
@@ -223,7 +229,7 @@ function Dashboard() {
             />
             <button
               type="submit"
-              className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className="w-full rounded-md bg-gradient-sunset px-4 py-2 text-sm font-semibold text-white shadow-glow hover:opacity-90"
             >
               Add expense
             </button>
@@ -232,31 +238,53 @@ function Dashboard() {
 
         {/* List */}
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
-          <h2 className="text-base font-semibold mb-3">History</h2>
+          <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-gradient-mint" />
+            History
+          </h2>
           {expenses.length === 0 ? (
             <p className="text-sm text-muted-foreground">No expenses yet.</p>
           ) : (
             <ul className="divide-y">
-              {expenses.map((e) => (
-                <li key={e.id} className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="text-sm font-medium">{e.reason}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(e.created_at).toLocaleDateString()} · {new Date(e.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold">-{Number(e.amount).toFixed(2)}</span>
-                    <button
-                      onClick={() => removeExpense(e.id)}
-                      className="text-xs text-muted-foreground hover:text-destructive"
-                      aria-label="Delete"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </li>
-              ))}
+              {expenses.map((e, i) => {
+                const dots = ["bg-brand-pink", "bg-brand-purple", "bg-brand-blue", "bg-brand-teal", "bg-brand-orange", "bg-brand-green"];
+                return (
+                  <li key={e.id} className="flex items-center justify-between py-3">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="inline-block h-8 w-8 rounded-lg"
+                        style={{
+                          background: [
+                            "var(--brand-pink)",
+                            "var(--brand-purple)",
+                            "var(--brand-blue)",
+                            "var(--brand-teal)",
+                            "var(--brand-orange)",
+                            "var(--brand-green)",
+                          ][i % 6],
+                        }}
+                        aria-hidden
+                      />
+                      <div>
+                        <p className="text-sm font-medium">{e.reason}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(e.created_at).toLocaleDateString()} · {new Date(e.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-destructive">-{Number(e.amount).toFixed(2)}</span>
+                      <button
+                        onClick={() => removeExpense(e.id)}
+                        className="text-xs text-muted-foreground hover:text-destructive"
+                        aria-label="Delete"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -265,13 +293,19 @@ function Dashboard() {
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: number; tone?: "good" | "danger" | "muted" }) {
-  const color =
-    tone === "danger" ? "text-destructive" : tone === "good" ? "text-emerald-600" : tone === "muted" ? "text-muted-foreground" : "text-foreground";
+function Stat({ label, value, tone }: { label: string; value: number; tone?: "blue" | "orange" | "green" | "danger" }) {
+  const bg =
+    tone === "danger"
+      ? "linear-gradient(135deg, oklch(0.72 0.22 20), oklch(0.62 0.25 20))"
+      : tone === "green"
+      ? "var(--gradient-mint)"
+      : tone === "orange"
+      ? "var(--gradient-sunset)"
+      : "var(--gradient-hero)";
   return (
-    <div className="rounded-lg bg-muted/40 p-3 text-center">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`mt-1 text-lg font-semibold ${color}`}>{value.toFixed(2)}</p>
+    <div className="rounded-xl p-3 text-center text-white shadow-glow" style={{ backgroundImage: bg }}>
+      <p className="text-[10px] uppercase tracking-wider opacity-90">{label}</p>
+      <p className="mt-1 text-lg font-bold">{value.toFixed(2)}</p>
     </div>
   );
 }
