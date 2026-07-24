@@ -76,9 +76,12 @@ function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-2xl border bg-card p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-center">MySpend</h1>
+    <div className="min-h-screen text-foreground flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-sm rounded-2xl border bg-card p-6 shadow-glow relative overflow-hidden">
+        <div className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full bg-gradient-hero opacity-30 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-16 h-40 w-40 rounded-full bg-gradient-mint opacity-30 blur-2xl" />
+        <div className="relative">
+        <h1 className="text-3xl font-extrabold text-center text-gradient">MySpend</h1>
         <p className="mt-1 text-center text-sm text-muted-foreground">
           {mode === "signin" ? "Sign in to your account" : "Create your account"}
         </p>
