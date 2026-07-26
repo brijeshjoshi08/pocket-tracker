@@ -1,29 +1,65 @@
-# Welcome to your Lovable project
+# 💰 Pocket Tracker
+
+Pocket Tracker is a modern expense tracking web application that helps users manage their personal finances with ease. Users can securely sign in using their Google account, record income and expenses, categorize transactions, and visualize their spending through an interactive dashboard.
 
 This project was built with [Lovable](https://lovable.dev).
 
-## Build with Lovable
+## 🌐 Live Demo
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+https://yup-pocket-tracker.lovable.app/
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+---
 
-## Development
+## ✨ Features
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+- 🔐 Secure Google Authentication
+- 💵 Add, edit, and delete income & expense records
+- 📂 Categorize transactions
+- 📊 Interactive dashboard with charts
+- 📈 Monthly spending insights
+- 📱 Responsive design for desktop and mobile
+- ☁️ Cloud database using Supabase
+- ⚡ Fast and modern user interface
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+---
 
-## Built with
+## 🛠️ Tech Stack
 
-- TanStack Start
-- TypeScript
+### Frontend
 - React
+- TypeScript
+- TanStack Start
+- Vite
 - Tailwind CSS
+
+### Backend
+- Supabase
+
+### Authentication
+- Google OAuth (Supabase Auth)
+
+### Database
+- PostgreSQL (Supabase)
+
+### Libraries
+- TanStack Query
+- TanStack Router
+- React Hook Form
+- Zod
+- Recharts
+- Radix UI
+- Lucide React
+- Sonner
+
+---
+
+## 📂 Project Structure
+
+```
+src/
+├── components/
+├── routes/
+├── hooks/
+├── integrations/
+├── lib/
+└── server.ts
