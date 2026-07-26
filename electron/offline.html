@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Pocket Tracker — offline</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at 20% 10%, #3b2a7a, #0b0a1f 60%);
+        color: #f4f2ff;
+        display: grid;
+        place-items: center;
+        text-align: center;
+      }
+      .card {
+        max-width: 26rem;
+        padding: 2.5rem;
+        border-radius: 1.5rem;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+      }
+      h1 {
+        font-size: 1.4rem;
+        margin: 0 0 0.6rem;
+      }
+      p {
+        opacity: 0.75;
+        line-height: 1.5;
+        margin: 0 0 1.4rem;
+      }
+      button {
+        border: 0;
+        cursor: pointer;
+        padding: 0.7rem 1.4rem;
+        border-radius: 999px;
+        font-weight: 600;
+        color: #12102b;
+        background: linear-gradient(135deg, #7af0d0, #8fb8ff 55%, #f7a8ff);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>You're offline</h1>
+      <p>
+        Pocket Tracker keeps your budget in your account in the cloud, so it needs an internet
+        connection. Reconnect and try again.
+      </p>
+      <button onclick="location.reload()">Retry</button>
+    </div>
+  </body>
+</html>
