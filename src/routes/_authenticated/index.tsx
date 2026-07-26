@@ -131,12 +131,20 @@ function Dashboard() {
       <div className="mx-auto max-w-2xl px-4 py-8 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-extrabold tracking-tight text-gradient">MySpend</h1>
-          <button
-            onClick={signOut}
-            className="text-xs text-muted-foreground hover:text-foreground underline"
-          >
-            Sign out
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/desktop"
+              className="rounded-full border px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              Get desktop app
+            </Link>
+            <button
+              onClick={signOut}
+              className="text-xs text-muted-foreground hover:text-foreground underline"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
 
         {/* Profile */}
